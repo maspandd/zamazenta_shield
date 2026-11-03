@@ -52,6 +52,9 @@ If the library is missing at runtime, the app reports `REPACKAGED` (`native:libz
 `ZamazentaShieldRequireNative` is `false`. Natives are bound with `RegisterNatives` (only `JNI_OnLoad`
 is exported), and keep rules ship in `proguard-zshield.pro`.
 
+If the build server cannot build native code, set `ZamazentaShieldNativeBuild` to `false`. The library is
+then not built, the app does not expect it, and only the Java/iOS protections run.
+
 > AGP allows one `externalNativeBuild` per module. If another plugin or the app already declares one,
 > merge `src/main/cpp/zshield/CMakeLists.txt` into it with `add_subdirectory`.
 
@@ -100,6 +103,7 @@ Extensibility Configuration.
 | `BlockMemoryScan` | true | Android | Block when `/proc/self/mem` is opened by another process |
 | `BlockCodeTraceDetection` | true | Android | Native tracer polling and `PR_SET_DUMPABLE 0` hardening |
 | `ZamazentaShieldRequireNative` | true | Android | Treat a missing `libzshield.so` as repackaging |
+| `ZamazentaShieldNativeBuild` | true | Android | `false` skips building the native layer (no NDK/CMake on the build server); Java protections still run |
 
 ### Signing certificates
 

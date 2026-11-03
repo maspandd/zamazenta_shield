@@ -34,6 +34,7 @@ final class ShieldConfig {
     final boolean blockHiddenSePolicyArtifacts;
     final boolean blockMemoryScan;
     final boolean blockCodeTraceDetection;
+    final boolean nativeBuild;
     final boolean requireNative;
 
     final String exitOnUrl;
@@ -64,7 +65,9 @@ final class ShieldConfig {
         blockHiddenSePolicyArtifacts = p.getBoolean("BlockHiddenSEPolicyArtifacts", false);
         blockMemoryScan = p.getBoolean("BlockMemoryScan", true);
         blockCodeTraceDetection = p.getBoolean("BlockCodeTraceDetection", true);
-        requireNative = p.getBoolean("ZamazentaShieldRequireNative", true);
+        nativeBuild = p.getBoolean("ZamazentaShieldNativeBuild", true);
+        // A build made with ZamazentaShieldNativeBuild=false ships without libzshield by design.
+        requireNative = nativeBuild && p.getBoolean("ZamazentaShieldRequireNative", true);
 
         exitOnUrl = p.getString("ExitOnURL", "").trim();
         signerFingerprints = Signers.parseList(p.getString("ApplicationSignerCertificate", ""));
@@ -119,6 +122,7 @@ final class ShieldConfig {
             json.put("BlockHiddenSEPolicyArtifacts", blockHiddenSePolicyArtifacts);
             json.put("BlockMemoryScan", blockMemoryScan);
             json.put("BlockCodeTraceDetection", blockCodeTraceDetection);
+            json.put("ZamazentaShieldNativeBuild", nativeBuild);
             json.put("ZamazentaShieldRequireNative", requireNative);
             json.put("ExitOnURL", exitOnUrl);
             json.put("ApplicationSignerCertificateCount", signerFingerprints.size());

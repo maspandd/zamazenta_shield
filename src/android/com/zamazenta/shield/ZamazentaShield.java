@@ -55,7 +55,7 @@ public class ZamazentaShield extends CordovaPlugin {
         enforcer = new Enforcer(activity, config, this::emit, screenGuard::blank);
         activity.runOnUiThread(screenGuard::install);
 
-        nativeLoaded = NativeShield.load();
+        nativeLoaded = config.nativeBuild && NativeShield.load();
         if (nativeLoaded) {
             Context app = activity.getApplicationContext();
             NativeShield.start(config.nativeFlags(), (int) Math.min(config.recheckIntervalMs, Integer.MAX_VALUE),

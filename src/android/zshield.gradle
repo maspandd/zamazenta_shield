@@ -1,12 +1,25 @@
 // Applied to the Cordova app module by plugin.xml. Builds libzshield.so from the C sources that
 // plugin.xml copies into app/src/main/cpp/zshield. The app's AGP picks its default NDK.
 // Note: AGP allows one externalNativeBuild per module; another plugin declaring one will conflict.
-android {
-    externalNativeBuild {
-        cmake {
-            path file("src/main/cpp/zshield/CMakeLists.txt")
+//
+// Preference ZamazentaShieldNativeBuild=false skips the native layer, for build servers without
+// the NDK/CMake. The Java side then stops expecting libzshield (see ShieldConfig.requireNative).
+def zshieldNativeBuild = !project.ext.has('cdvHelpers') ||
+        !'false'.equalsIgnoreCase(String.valueOf(cdvHelpers.getConfigPreference('ZamazentaShieldNativeBuild', 'true')).trim())
+
+if (zshieldNativeBuild) {
+    android {
+        externalNativeBuild {
+            cmake {
+                path file("src/main/cpp/zshield/CMakeLists.txt")
+            }
         }
     }
+} else {
+    logger.lifecycle('ZamazentaShield: native layer skipped (ZamazentaShieldNativeBuild=false)')
+}
+
+android {
     buildTypes.configureEach {
         proguardFile file("src/main/cpp/zshield/proguard-zshield.pro")
     }
