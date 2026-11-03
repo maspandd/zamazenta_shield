@@ -16,9 +16,21 @@ AppShield's post-build binary shield.
 cordova plugin add /path/to/zamazenta_shield
 ```
 
-OutSystems (O11/ODC): host the plugin in a Git repository and reference it from a wrapper module's
-Extensibility Configuration. See [outsystems/extensibility-configuration.json](outsystems/extensibility-configuration.json).
-Remove the AppShield plugin from the app first.
+### OutSystems (O11 / ODC)
+
+1. Remove the AppShield plugin from the app; both read the same preference names.
+2. Create a wrapper module whose Extensibility Configuration points at a tagged version:
+   `"plugin": { "url": "https://github.com/maspandd/zamazenta_shield.git#v0.1.0" }`. See
+   [outsystems/extensibility-configuration.json](outsystems/extensibility-configuration.json).
+3. For the first build, add `ZamazentaShieldReportOnly` = `true`. OutSystems debug builds are
+   `debuggable`, which counts as repackaging, and the signing fingerprint is not known yet.
+4. Generate the native build, install it, and check `adb logcat -s ZamazentaShield` or `getStatus()`.
+   `"native": true` means libzshield loaded.
+5. Read the signer with `apksigner verify --print-certs app.apk`, set `ApplicationSignerCertificate`
+   (add the Play App Signing key if you publish through Play), then turn report-only off.
+
+The plugin needs MABS with cordova-android ≥ 12. If MABS cannot build the native layer, set
+`ZamazentaShieldNativeBuild` = `false` (see below).
 
 Requirements: cordova-android ≥ 12 (minSdk 24), cordova-ios ≥ 6. The Android build compiles a native
 library, so the build machine needs the Android NDK and CMake. AGP downloads its default versions if

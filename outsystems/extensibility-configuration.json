@@ -1,6 +1,6 @@
 {
   "plugin": {
-    "url": "https://github.com/<your-org>/cordova-plugin-zamazenta-shield.git#0.1.0"
+    "url": "https://github.com/maspandd/zamazenta_shield.git#v0.1.0"
   },
   "preferences": {
     "global": [
