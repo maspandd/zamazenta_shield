@@ -47,10 +47,12 @@ static NSArray<NSString *> *ZSHookImageMarkers(void) {
     ];
 }
 
+#if !TARGET_OS_SIMULATOR
 /// Locations the dynamic loader legitimately maps code from on a stock device.
 static NSArray<NSString *> *ZSTrustedImagePrefixes(void) {
     return @[@"/usr/lib/", @"/System/", @"/Developer/", @"/preboot/Cryptexes/", @"/usr/libexec/"];
 }
+#endif
 
 static const in_port_t ZSFridaPorts[] = {27042, 27047};
 
@@ -105,6 +107,7 @@ static BOOL ZSLocalPortOpen(in_port_t port) {
     return open;
 }
 
+#if !TARGET_OS_SIMULATOR
 /// cryptid of the main executable: 1 = FairPlay-encrypted (App Store / TestFlight), 0 = plain, -1 = no info.
 static int ZSMainImageCryptId(void) {
     const struct mach_header *header = _dyld_get_image_header(0);
@@ -145,6 +148,7 @@ static NSArray<NSString *> *ZSProvisionedCertificateFingerprints(void) {
     }
     return fingerprints;
 }
+#endif
 
 #pragma mark - Detectors
 
@@ -208,7 +212,9 @@ static NSArray<NSString *> *ZSProvisionedCertificateFingerprints(void) {
 + (void)addImageDetectionsTo:(NSMutableArray *)out {
     NSMutableArray *hooks = [NSMutableArray array];
     NSMutableArray *injected = [NSMutableArray array];
+#if !TARGET_OS_SIMULATOR
     NSString *bundlePath = ZSStripPrivate(NSBundle.mainBundle.bundlePath);
+#endif
 
     uint32_t count = _dyld_image_count();
     for (uint32_t i = 0; i < count; i++) {
