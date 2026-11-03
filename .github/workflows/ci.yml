@@ -88,6 +88,16 @@ jobs:
           for abi in arm64-v8a armeabi-v7a x86 x86_64; do
             unzip -l "$apk" | grep -q "lib/$abi/libzshield.so" || { echo "::error::missing $abi"; exit 1; }
           done
+      - name: Build with ZamazentaShieldNativeBuild=false (no NDK fallback)
+        working-directory: app
+        run: |
+          sed -i 's#</widget>#    <preference name="ZamazentaShieldNativeBuild" value="false" />\n</widget>#' config.xml
+          $CORDOVA build android --no-telemetry
+          apk=platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if unzip -l "$apk" | grep -q libzshield; then
+            echo "::error::libzshield.so still packaged with the native build disabled"
+            exit 1
+          fi
 
   ios:
     runs-on: macos-15
