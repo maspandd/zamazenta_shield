@@ -119,7 +119,8 @@ public class ZamazentaShield extends CordovaPlugin {
         List<Detection> out = new ArrayList<>();
         try {
             if (!config.debugMode) RuntimeDetector.scanDebuggers(out);
-            RuntimeDetector.scanHooks(context, out);
+            // Between full scans the native watchdog covers hooks; re-reading maps from Java only adds GC churn.
+            if (full || !nativeLoaded) RuntimeDetector.scanHooks(context, out);
             if (config.blockVpn) DeviceStateDetector.scanVpn(context, out);
             if (full) {
                 if (!config.allowRooted) RootDetector.scan(context, config, out);
