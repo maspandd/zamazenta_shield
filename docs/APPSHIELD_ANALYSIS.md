@@ -122,4 +122,16 @@ emulator with Magisk:
 | `cat /proc/<pid>/mem` from another process → code 42 | ✅ |
 | 1-byte `int3` patched into libc `inotify_add_watch` → code 6 on the next watchdog pass | ✅ |
 | Enforcing: ExitOnURL opened in browser, process killed | ✅ |
-| Real Frida server, ptrace tracer, arm64 device | not tested |
+| Arm64 device | not tested |
+
+### Frida 17.25.2 (official android-x86_64 `frida-server` and `frida-inject`), same emulator
+
+| Test | Result |
+|---|---|
+| `frida-server` listening, app resumed → code 22 `port:127.0.0.1:27042` (Java, on full scans: start/resume) | ✅ |
+| `frida-inject` agent + `Interceptor.attach` on libc `open`/`fopen`/`access` → within one watchdog pass: code 9 (`native-TracerPid` during injection); code 22 (agent memfd in maps and fds, `gum-js-loop`/`gmain`/`gdbus`/`pool-spawner` threads, agent strings in memory); code 6 (`open`, `fopen`, `access`, plus `exit`/`_exit` that the agent patches itself) | ✅ |
+| Enforcing release build, `PR_SET_DUMPABLE 0` applied (`/proc/<pid>/mem` owned by root) | ✅ |
+| Fail-safe: injection detected while the injector held the main thread, so the Java enforcer never ran (no kill, no ExitOnURL). Process ended 3.05 s later with `exited cleanly (0)`, i.e. the native raw `exit_group` | ✅ |
+
+Not exercised: the attacker script that turns libc `kill`/`exit`/`_exit` into no-ops never loaded,
+because the injection itself was caught and the app died first. A renamed Frida build was not tried.
