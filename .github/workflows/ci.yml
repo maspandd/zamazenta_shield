@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CORDOVA: npx --yes cordova@13.0.0
+  CORDOVA_ANDROID: 15.1.0
+  CORDOVA_IOS: 8.1.1
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: node --check www/ZamazentaShield.js
+      - name: plugin.xml is well formed and lists every source file
+        run: |
+          python3 - <<'EOF'
+          import pathlib, sys, xml.etree.ElementTree as ET
+          root = ET.parse("plugin.xml").getroot()
+          listed = {e.get("src") for e in root.iter() if e.get("src")}
+          missing = [p for p in listed if not pathlib.Path(p).is_file()]
+          sources = [str(p).replace("\\", "/") for p in pathlib.Path("src").rglob("*") if p.is_file()]
+          unlisted = [p for p in sources if p not in listed]
+          for p in missing: print(f"::error::plugin.xml references missing file {p}")
+          for p in unlisted: print(f"::error::{p} is not listed in plugin.xml")
+          sys.exit(1 if missing or unlisted else 0)
+          EOF
+
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile libzshield for every ABI with -Werror
+        working-directory: src/android/cpp
+        run: |
+          bin="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          for target in aarch64-linux-android24 x86_64-linux-android24 armv7a-linux-androideabi24 i686-linux-android24; do
+            echo "::group::$target"
+            "$bin/clang" --target="$target" -std=c11 -O2 -fPIC -shared -fvisibility=hidden \
+              -Wall -Wextra -Werror -Wl,-z,max-page-size=16384 -Wl,--gc-sections \
+              -o "libzshield-$target.so" zs_jni.c zs_checks.c zs_apksig.c zs_sha256.c zs_util.c -ldl -llog
+            exports=$("$bin/llvm-nm" -D --defined-only "libzshield-$target.so" | awk '{print $3}')
+            echo "exports: $exports"
+            [ "$exports" = "JNI_OnLoad" ] || { echo "::error::unexpected exports for $target"; exit 1; }
+            echo "::endgroup::"
+          done
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Create test app
+        run: |
+          $CORDOVA create app com.zamazenta.ci ZsCi --no-telemetry
+          cd app
+          $CORDOVA platform add "android@$CORDOVA_ANDROID" --no-telemetry
+          $CORDOVA plugin add ../plugin --no-telemetry
+      - name: Build debug APK
+        working-directory: app
+        run: $CORDOVA build android --no-telemetry
+      - name: APK ships libzshield for every ABI
+        working-directory: app
+        run: |
+          apk=platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l "$apk" | grep libzshield
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            unzip -l "$apk" | grep -q "lib/$abi/libzshield.so" || { echo "::error::missing $abi"; exit 1; }
+          done
+
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Create test app
+        run: |
+          $CORDOVA create app com.zamazenta.ci ZsCi --no-telemetry
+          cd app
+          $CORDOVA platform add "ios@$CORDOVA_IOS" --no-telemetry
+          $CORDOVA plugin add ../plugin --no-telemetry
+          $CORDOVA prepare ios --no-telemetry
+      # The simulator build skips the !TARGET_OS_SIMULATOR paths (repackaging, injected-library
+      # checks); the unsigned device build compiles them. Warnings in plugin sources fail the job.
+      - name: Build for simulator and device
+        working-directory: app/platforms/ios
+        run: |
+          set -o pipefail
+          workspace=$(ls -d *.xcworkspace | head -1)
+          scheme="${workspace%.xcworkspace}"
+          for sdk in iphonesimulator iphoneos; do
+            if [ "$sdk" = iphoneos ]; then destination="generic/platform=iOS"; else destination="generic/platform=iOS Simulator"; fi
+            echo "::group::$sdk"
+            xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Debug -sdk "$sdk" \
+              -destination "$destination" CODE_SIGNING_ALLOWED=NO build | tee "build-$sdk.log" | grep -E "error:|warning:|BUILD" || true
+            echo "::endgroup::"
+            if grep -E "/(ZS[A-Za-z]+|ZamazentaShield)\.(m|h):[0-9]+:[0-9]+: (warning|error)" "build-$sdk.log"; then
+              echo "::error::warnings or errors in plugin sources ($sdk)"
+              exit 1
+            fi
+            grep -q "BUILD SUCCEEDED" "build-$sdk.log" || { echo "::error::$sdk build failed"; exit 1; }
+          done
