@@ -1,0 +1,13 @@
+// Applied to the Cordova app module by plugin.xml. Builds libzshield.so from the C sources that
+// plugin.xml copies into app/src/main/cpp/zshield. The app's AGP picks its default NDK.
+// Note: AGP allows one externalNativeBuild per module; another plugin declaring one will conflict.
+android {
+    externalNativeBuild {
+        cmake {
+            path file("src/main/cpp/zshield/CMakeLists.txt")
+        }
+    }
+    buildTypes.configureEach {
+        proguardFile file("src/main/cpp/zshield/proguard-zshield.pro")
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "plugin": {
+    "url": "https://github.com/<your-org>/cordova-plugin-zamazenta-shield.git#0.1.0"
+  },
+  "preferences": {
+    "global": [
+      { "name": "ExitOnURL", "value": "https://example.com/app-blocked" },
+      { "name": "AllowScreenshot", "value": "false" },
+      { "name": "AllowJailbrokenRootedDevices", "value": "false" },
+      { "name": "AppShieldDebugMode", "value": "false" }
+    ],
+    "android": [
+      { "name": "ApplicationSignerCertificate", "value": "<SHA-256 of the Play App Signing certificate>;<SHA-256 of your upload certificate>" },
+      { "name": "BlockUnlockedBootloader", "value": "true" },
+      { "name": "AllowTapjacking", "value": "false" }
+    ],
+    "ios": [
+      { "name": "ApplicationSignerCertificate", "value": "<SHA-256 of your distribution certificate>" }
+    ]
+  }
+}

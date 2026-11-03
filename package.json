@@ -1,0 +1,39 @@
+{
+  "name": "cordova-plugin-zamazenta-shield",
+  "version": "0.1.0",
+  "description": "Runtime app shielding for Cordova: root/jailbreak, debugger, hooking, repackaging, emulator and screen-capture protection, configured with OutSystems AppShield-compatible preferences.",
+  "cordova": {
+    "id": "cordova-plugin-zamazenta-shield",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "types": "types/index.d.ts",
+  "files": [
+    "plugin.xml",
+    "www/",
+    "src/",
+    "types/",
+    "README.md"
+  ],
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "outsystems",
+    "rasp",
+    "root-detection",
+    "jailbreak-detection",
+    "anti-tamper"
+  ],
+  "engines": {
+    "cordovaDependencies": {
+      "0.1.0": {
+        "cordova-android": ">=12.0.0",
+        "cordova-ios": ">=6.0.0"
+      }
+    }
+  },
+  "license": "UNLICENSED"
+}

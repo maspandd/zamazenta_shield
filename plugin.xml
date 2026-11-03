@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-zamazenta-shield"
+        version="0.1.0">
+
+    <name>Zamazenta Shield</name>
+    <description>Runtime app shielding with OutSystems AppShield-compatible configuration.</description>
+    <license>UNLICENSED</license>
+    <keywords>security,rasp,root,jailbreak,anti-tamper,outsystems</keywords>
+
+    <engines>
+        <engine name="cordova-android" version=">=12.0.0" />
+        <engine name="cordova-ios" version=">=6.0.0" />
+    </engines>
+
+    <js-module src="www/ZamazentaShield.js" name="ZamazentaShield">
+        <clobbers target="cordova.plugins.ZamazentaShield" />
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="ZamazentaShield">
+                <param name="android-package" value="com.zamazenta.shield.ZamazentaShield" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
+            <!-- Package visibility for root-manager detection; keep in sync with RootDetector.ROOT_PACKAGES.
+                 Named packages only, so QUERY_ALL_PACKAGES is never needed. -->
+            <queries>
+                <package android:name="com.topjohnwu.magisk" />
+                <package android:name="io.github.vvb2060.magisk" />
+                <package android:name="io.github.huskydg.magisk" />
+                <package android:name="me.weishu.kernelsu" />
+                <package android:name="me.bmax.apatch" />
+                <package android:name="eu.chainfire.supersu" />
+                <package android:name="com.koushikdutta.superuser" />
+                <package android:name="com.noshufou.android.su" />
+                <package android:name="com.thirdparty.superuser" />
+                <package android:name="com.kingroot.kinguser" />
+                <package android:name="com.kingo.root" />
+                <package android:name="com.zachspong.temprootremovejb" />
+                <package android:name="com.devadvance.rootcloak" />
+                <package android:name="com.devadvance.rootcloakplus" />
+                <package android:name="de.robv.android.xposed.installer" />
+                <package android:name="org.lsposed.manager" />
+                <package android:name="com.saurik.substrate" />
+                <package android:name="com.amphoras.hidemyroot" />
+            </queries>
+        </config-file>
+
+        <!-- Task-hijacking (StrandHogg) mitigation: an empty affinity keeps foreign activities out of our task. -->
+        <edit-config file="AndroidManifest.xml" target="/manifest/application/activity[@android:name='MainActivity']" mode="merge">
+            <activity android:taskAffinity="" />
+        </edit-config>
+
+        <source-file src="src/android/com/zamazenta/shield/ZamazentaShield.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/ShieldConfig.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/Threat.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/Detection.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/Enforcer.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/ScreenGuard.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/Signers.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/SystemFiles.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/RootDetector.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/EmulatorDetector.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/IntegrityDetector.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/RuntimeDetector.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/DeviceStateDetector.java" target-dir="src/com/zamazenta/shield" />
+        <source-file src="src/android/com/zamazenta/shield/NativeShield.java" target-dir="src/com/zamazenta/shield" />
+
+        <!-- Native layer (libzshield): copied to app/src/main/cpp/zshield and built by zshield.gradle. -->
+        <framework src="src/android/zshield.gradle" custom="true" type="gradleReference" />
+        <source-file src="src/android/cpp/CMakeLists.txt" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/proguard-zshield.pro" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_sys.h" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_util.h" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_util.c" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_checks.h" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_checks.c" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_sha256.h" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_sha256.c" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_apksig.h" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_apksig.c" target-dir="cpp/zshield" />
+        <source-file src="src/android/cpp/zs_jni.c" target-dir="cpp/zshield" />
+    </platform>
+
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="ZamazentaShield">
+                <param name="ios-package" value="ZamazentaShield" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <!-- Needed for canOpenURL-based jailbreak checks; keep in sync with ZSJailbreakSchemes(). -->
+        <config-file target="*-Info.plist" parent="LSApplicationQueriesSchemes">
+            <array>
+                <string>cydia</string>
+                <string>sileo</string>
+                <string>zbra</string>
+                <string>filza</string>
+                <string>undecimus</string>
+                <string>activator</string>
+            </array>
+        </config-file>
+
+        <header-file src="src/ios/ZamazentaShield.h" />
+        <source-file src="src/ios/ZamazentaShield.m" />
+        <header-file src="src/ios/ZSConfig.h" />
+        <source-file src="src/ios/ZSConfig.m" />
+        <header-file src="src/ios/ZSDetection.h" />
+        <source-file src="src/ios/ZSDetection.m" />
+        <header-file src="src/ios/ZSDetectors.h" />
+        <source-file src="src/ios/ZSDetectors.m" />
+        <header-file src="src/ios/ZSScreenGuard.h" />
+        <source-file src="src/ios/ZSScreenGuard.m" />
+    </platform>
+</plugin>
